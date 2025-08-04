@@ -84,6 +84,16 @@ func (ps *ProxyServer) HandleProxy(c *gin.Context) {
 
 	isStream := channelHandler.IsStreamRequest(c, bodyBytes)
 
+	// logrus.Infof("--- Proxy Request ---")
+	// logrus.Infof("Method: %s", c.Request.Method)
+	// logrus.Infof("URL: %s", c.Request.URL.String())
+	// headers, _ := json.MarshalIndent(c.Request.Header, "", "  ")
+	// logrus.Infof("Headers: %s", string(headers))
+	// logrus.Infof("Body: %s", string(finalBodyBytes))
+	// logrus.Infof("isStream: %v", isStream)
+	// logrus.Infof("--------------------")
+
+
 	ps.executeRequestWithRetry(c, channelHandler, group, finalBodyBytes, isStream, startTime, 0, nil)
 }
 
@@ -165,8 +175,12 @@ func (ps *ProxyServer) executeRequestWithRetry(
 	q.Del("key")
 	req.URL.RawQuery = q.Encode()
 
-	channelHandler.ModifyRequest(req, apiKey, group)
+	channelHandler.ModifyRequest(req, apiKey, group, isStream)
 
+// Log the final request body before sending
+	// finalReqBody, _ := io.ReadAll(req.Body)
+	// req.Body = io.NopCloser(bytes.NewBuffer(finalReqBody))
+	// logrus.Infof("Final Request Body: %s", string(finalReqBody))
 	var client *http.Client
 	if isStream {
 		client = channelHandler.GetStreamClient()

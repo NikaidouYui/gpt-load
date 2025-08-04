@@ -1,6 +1,8 @@
 package proxy
 
 import (
+	// "bytes"
+	// "encoding/json"
 	"io"
 	"net/http"
 
@@ -25,6 +27,9 @@ func (ps *ProxyServer) handleStreamingResponse(c *gin.Context, resp *http.Respon
 	for {
 		n, err := resp.Body.Read(buf)
 		if n > 0 {
+			// logrus.Infof("--- Stream Chunk ---")
+			// logrus.Infof("Data: %s", string(buf[:n]))
+			// logrus.Infof("--------------------")
 			if _, writeErr := c.Writer.Write(buf[:n]); writeErr != nil {
 				logUpstreamError("writing stream to client", writeErr)
 				return
@@ -42,6 +47,21 @@ func (ps *ProxyServer) handleStreamingResponse(c *gin.Context, resp *http.Respon
 }
 
 func (ps *ProxyServer) handleNormalResponse(c *gin.Context, resp *http.Response) {
+	// bodyBytes, err := io.ReadAll(resp.Body)
+	// if err != nil {
+	// 	logUpstreamError("reading response body", err)
+	// 	return
+	// }
+	// resp.Body.Close()
+	// resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // reset body
+
+	// logrus.Infof("--- Proxy Response ---")
+	// logrus.Infof("Status Code: %d", resp.StatusCode)
+	// headers, _ := json.MarshalIndent(resp.Header, "", "  ")
+	// logrus.Infof("Headers: %s", string(headers))
+	// logrus.Infof("Body: %s", string(bodyBytes))
+	// logrus.Infof("--------------------")
+
 	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
 		logUpstreamError("copying response body", err)
 	}

@@ -35,7 +35,7 @@ func newGeminiChannel(f *Factory, group *models.Group) (ChannelProxy, error) {
 }
 
 // ModifyRequest adds the API key as a query parameter for Gemini requests.
-func (ch *GeminiChannel) ModifyRequest(req *http.Request, apiKey *models.APIKey, group *models.Group) {
+func (ch *GeminiChannel) ModifyRequest(req *http.Request, apiKey *models.APIKey, group *models.Group, isStream bool) {
 	if strings.Contains(req.URL.Path, "v1beta/openai") {
 		req.Header.Set("Authorization", "Bearer "+apiKey.KeyValue)
 	} else {

@@ -118,3 +118,7 @@ func (b *BaseChannel) GetHTTPClient() *http.Client {
 func (b *BaseChannel) GetStreamClient() *http.Client {
 	return b.StreamClient
 }
+// ModifyRequest is a placeholder and should be implemented by specific channels.
+func (b *BaseChannel) ModifyRequest(req *http.Request, apiKey *models.APIKey, group *models.Group, isStream bool) {
+	// Default implementation does nothing.
+}

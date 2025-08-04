@@ -35,8 +35,46 @@ func newOpenAIChannel(f *Factory, group *models.Group) (ChannelProxy, error) {
 }
 
 // ModifyRequest sets the Authorization header for the OpenAI service.
-func (ch *OpenAIChannel) ModifyRequest(req *http.Request, apiKey *models.APIKey, group *models.Group) {
+func (ch *OpenAIChannel) ModifyRequest(req *http.Request, apiKey *models.APIKey, group *models.Group, isStream bool) {
 	req.Header.Set("Authorization", "Bearer "+apiKey.KeyValue)
+
+	// Read the entire request body
+	bodyBytes, err := io.ReadAll(req.Body)
+	if err != nil {
+		// If reading fails, proceed without modification
+		return
+	}
+	req.Body.Close() // Close the original body
+
+	// If there's no body, there's nothing to modify
+	if len(bodyBytes) == 0 {
+		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		return
+	}
+
+	// Unmarshal the JSON body into a map
+	var bodyMap map[string]interface{}
+	if err := json.Unmarshal(bodyBytes, &bodyMap); err != nil {
+		// If unmarshalling fails, it might not be JSON or is malformed.
+		// In this case, we restore the original body and proceed.
+		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		return
+	}
+
+	// Set the 'stream' field based on the isStream flag
+	bodyMap["stream"] = isStream
+
+	// Marshal the modified map back to JSON
+	modifiedBodyBytes, err := json.Marshal(bodyMap)
+	if err != nil {
+		// If marshalling fails, restore the original body
+		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		return
+	}
+
+	// Create a new reader with the modified body and update the request
+	req.Body = io.NopCloser(bytes.NewReader(modifiedBodyBytes))
+	req.ContentLength = int64(len(modifiedBodyBytes))
 }
 
 // IsStreamRequest checks if the request is for a streaming response using the pre-read body.
